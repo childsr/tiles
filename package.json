@@ -1,0 +1,29 @@
+{
+  "name": "tiles",
+  "version": "1.0.0",
+  "description": "Game based on xkcd.com/245",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/childsr/tiles.git"
+  },
+  "keywords": [
+    "xkcd",
+    "game",
+    "jam"
+  ],
+  "author": "Ryan Childs",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/childsr/tiles/issues"
+  },
+  "homepage": "https://github.com/childsr/tiles#readme",
+  "dependencies": {
+    "electron-debug": "^1.4.0",
+    "node-watch": "^0.5.5"
+  }
+}
