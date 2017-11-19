@@ -118,7 +118,7 @@ const genList2 = ( w, h, f ) => {
   return arr
 }
 const has = curry( ( x, arr ) => arr.includes(x) )
-const head = arr => comp2( slice( 0 ), lasti( arr ) )
+const head = arr => slice( 0, lasti(arr), arr )
 const isarr = Array.isArray
 const flatten = arr =>
   arr.reduce(
@@ -325,6 +325,9 @@ const iterate = f => n => ival => {
 //Math
 const {
   abs,
+  acos,
+  asin,
+  atan,
   ceil,
   cos,
   floor,

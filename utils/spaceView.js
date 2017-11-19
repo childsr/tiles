@@ -26,9 +26,9 @@ const {
   }
   id = opts.id || id
   Max = opts.Max || Max
-  font = opts.font || font
-  fontSize = opts.fontSize || fontSize
-  fontColor = opts.fontColor
+  // font = opts.font || font
+  // fontSize = opts.fontSize || fontSize
+  // fontColor = opts.fontColor
   wRatio = opts.wRatio || 1
   hRatio = opts.hRatio || 1
   offLeftRatio = opts.offLeftRatio || 0
@@ -68,7 +68,7 @@ const {
     canvas.style.left = `${window.innerWidth * offLeftRatio}px`
     canvas.style.top = `${window.innerHeight * offTopRatio}px`
     canvas.style.position = 'absolute'
-    context.font = font
+    // context.font = font
     if ( opts.pxMode ){
       setZoom( 2 * Max / w )
       shift( w / 2, h / 2 )
@@ -82,7 +82,7 @@ const {
     canvas.height = window.innerHeight
     w = canvas.width
     h = canvas.height
-    context.font = '15px Arial'
+    // context.font = '15px Arial'
     setZoom(zoom)
     context.putImageData(imageData, 0, 0)
   }
@@ -117,8 +117,8 @@ const {
     //Convert pixels to units.
     return pixels * pxSize
   }
-  const utp = opts.pxMode ? R.identity : _utp
-  const ptu = opts.pxMode ? R.identity : _ptu
+  const utp = opts.pxMode ? ( x => x ) : _utp
+  const ptu = opts.pxMode ? ( x => x ) : _ptu
 
   const addImg = ( path, callback ) => {
     let img = document.createElement('img')
@@ -339,7 +339,7 @@ const {
     const radius = pxRadius || 3
     if (color === 1) setColor(255,0,0,1)
     else setColor(color)
-    const a = alpha()
+    const a = context.globalAlpha
     seta( a*0.2 )
     fillCircle( x, y, ptu(radius+1) )
     seta( a )
@@ -426,7 +426,7 @@ const {
   }
   const showCursor = show => canvas.style.cursor = ( show ? '' : 'none' )
   function text(str, xPx, yPx) {
-    setColor(fontColor)
+    // setColor(fontColor)
     context.fillText(str, xPx, yPx)
   }
   const vertical = x => drawLine( x, ymax, x, ymin )

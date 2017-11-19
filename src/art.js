@@ -1,14 +1,29 @@
-const F = 0.025
-const k = 1
+const F = 0.03
+const k = 1.25
 const lw = 2
-const buf = 1
+const buf = 2
 const l = 640
+const Rd = 25
 
 const th = lw + 2*buf
-
 const color = black
+const s = l / 10
+const shaded = size => ( color, amin = 50, amax = 255 ) => {
+  // size -> color -> shader
+  const maxd = size
+  const ctr = [ size/2, size/2 ]
+  const a = ( x, y ) => {
+    const d = dist( [ x, y ], ctr ) / maxd
+    return smoothStep( amin, amax, d )
+  }
+  return ( x, y, clr ) => seta( color, a( x, y ) )
+}
+const genbox = ( shdr, size ) => {
+  return generateImg( size, size )(shdr)
+}
 
-const generateLines = async (n) => {
+//Generate all visual assets
+const generateArt = async (n) => {
   const vline = length => {
     const pln = ( () => {
       const p = perlin()
@@ -39,12 +54,23 @@ const generateLines = async (n) => {
   const gen = generateImg( th + 2*k, l )
   const genh = generateImg( l, th + 2*k )
 
-  let vlines, hlines
-
   const p = new Promise( success => success( {
     vlines: mapn( n+1, i => gen(vline(l)) ),
-    hlines: mapn( n+1, i => genh(hline(l)) )
+    hlines: mapn( n+1, i => genh(hline(l)) ),
+    blueBox: genbox( shaded(s)(blue), s ),
+    greenBox: genbox( shaded(s)(green), s ),
+    redBox: genbox( shaded(s)(red), s ),
+    grayBox: genbox( shaded(s)( gray, 0, 100 ), s ),
+    blackBox: genbox( nfill(black), s ),
+    player: playerImg(Rd)
   } ) )
 
+  return await p
+}
+
+const generateIntroArt = async () => {
+  const p = new Promise( success => success(
+    genbox( shaded(l - 100)(black), l - 100 ) )
+  )
   return await p
 }
