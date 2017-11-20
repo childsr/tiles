@@ -54,6 +54,11 @@ const generateArt = async (n) => {
   const gen = generateImg( th + 2*k, l )
   const genh = generateImg( l, th + 2*k )
 
+  const volOn = new Image( 50, 50 )
+  volOn.src = 'soundOn.png'
+  const volOff = new Image( 22, 44 )
+  volOff.src = 'soundOff.png'
+
   const p = new Promise( success => success( {
     vlines: mapn( n+1, i => gen(vline(l)) ),
     hlines: mapn( n+1, i => genh(hline(l)) ),
@@ -61,8 +66,10 @@ const generateArt = async (n) => {
     greenBox: genbox( shaded(s)(green), s ),
     redBox: genbox( shaded(s)(red), s ),
     grayBox: genbox( shaded(s)( gray, 0, 100 ), s ),
-    blackBox: genbox( nfill(black), s ),
-    player: playerImg(Rd)
+    blackBox: genbox( nfill(black), 1.015*s ),
+    player: playerImg(Rd),
+    volOn,
+    volOff
   } ) )
 
   return await p

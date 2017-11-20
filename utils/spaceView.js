@@ -77,14 +77,14 @@ const {
     window.addEventListener('resize', onWindowResize)
   }
   function onWindowResize() {
-    let imageData = context.getImageData(0, 0, w, h)
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    w = canvas.width
-    h = canvas.height
-    // context.font = '15px Arial'
-    setZoom(zoom)
-    context.putImageData(imageData, 0, 0)
+    // let imageData = context.getImageData(0, 0, w, h)
+    // canvas.width = window.innerWidth
+    // canvas.height = window.innerHeight
+    // w = canvas.width
+    // h = canvas.height
+    // // context.font = '15px Arial'
+    // setZoom(zoom)
+    // context.putImageData(imageData, 0, 0)
   }
 
   let imgs = []

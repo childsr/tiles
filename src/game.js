@@ -1,6 +1,18 @@
 'use strict'
 
-window.view = createView({pxMode: true})
+const [ winw, winh ] = [ window.innerWidth, window.innerHeight ]
+const wk = ( 1 - 640 / winw ) / 2
+const hk = ( 1 - 640 / winh ) / 2
+const woff = round( wk * winw )
+const hoff = round( hk * winh )
+
+window.view = createView({
+  width: 640,
+  height: 640,
+  offLeftRatio: wk,
+  offTopRatio: hk,
+  pxMode: true
+})
 const size = [ 640, 640 ]
 const s2 = map( mult(0.1), size )
 const n = 10
@@ -15,9 +27,13 @@ const edgeR = size[0] - s2[0] / 2
 const edgeT = s2[1] / 2
 const edgeB = size[1] - s2[1] / 2
 let drawBlue, drawGreen, drawRed, drawGray, drawBlack, drawPlayer
+let drawVolOn, drawVolOff
 let timer, mousepos, clicked, paused, t0, score, newHigh
 let highScore = window.localStorage.getItem('tilesHighScore') || 0
-let alive
+let alive = true, intro = true
+let art
+let vol = true
+const music = new Audio('tilesTheme.mp3')
 const pln1 = exp2( noise1() )
 const pln2 = exp2( noise1() )
 const pdir = t => V.unit( [ pln1( Fd * t ), pln2( Fd * t ) ] )
@@ -43,26 +59,38 @@ const keyListener = e => {
   if ( key === ' ' || key === 'Escape' || key === 'p' ){
     paused = !paused
     if (paused) {
-      console.log('PAUSED')
       t0 = timer()
       timer = () => t0
     }
     else {
-      console.log('UNPAUSED')
       const timer0 = setTimer()
       timer = () => t0 + timer0()
     }
 
   }
 }
+const volListener = e => {
+  if ( alive && e.clientX > 580 + woff && e.clientY < 60 + hoff ) {
+    vol = !vol
+    if (vol) music.play()
+    else music.pause()
+    if (intro) drawIntro()
+  }
+}
 
 const load = () => {
-  window.removeEventListener( 'keydown', load )
-  window.removeEventListener( 'click', load )
-  generateArt(n).then( art => init(art) )
+  generateArt(n).then( a => {
+    art = a
+    start()
+  } )
 }
-const init = art => {
+const init = e => {
+  if ( e.clientX < 50 + woff || e.clientX > 590 + woff || e.clientY < 50 + hoff || e.clientY > 590 + hoff )
+    return
+  window.removeEventListener( 'click', init )
+  // document.removeEventListener( 'click', volListener )
   view.context.font = `small-caps bold ${fontSize}px sans-serif`
+  intro = false
   clicked = false
   alive = true
   paused = false
@@ -95,6 +123,8 @@ const init = art => {
   drawPlayer = ( offx, offy ) => ( x, y ) => view.drawImg(
     art.player, 0.5, 0.5 )( ...gridToPx( offx, offy )([x,y])
   )
+  drawVolOn = view.drawImg( art.volOn, 0, 0 )
+  drawVolOff = view.drawImg( art.volOff, 0, 0 )
   const p1_ = perlin()
   p1_.perlin_octaves = 1
   const p1 = exp2( x => p1_.noise(x) )
@@ -120,7 +150,7 @@ const initMouse = () => {
     if ( !paused && alive ) clicked = true
   }
   view.canvas.onmousemove = e => {
-    mousepos = [ e.clientX, e.clientY ]
+    mousepos = [ e.clientX - woff, e.clientY - hoff ]
   }
   view.canvas.onmouseleave = e => {
     mousepos = null
@@ -137,9 +167,10 @@ const run = istate => {
   const loop = () => {
     if ( !paused ) {
       state = step(state)
-      draw(state)
     }
+    draw(state)
     if (alive) requestAnimationFrame(loop)
+
   }
   timer = setTimer()
   id = requestAnimationFrame(loop)
@@ -222,7 +253,7 @@ const drawScore = () => {
   // view.setFontSize(fontSize)
   const str = 'Score: ' + flr( timer() )
   const txtw = view.context.measureText(str).width
-  const boxx = ( view.w - txtw )/2 - scbuf - border
+  const boxx = 0//( view.w - txtw )/2 - scbuf - border
   const boxx2 = boxx + border
   const boxw = txtw + 2*scbuf + 2*border
   const boxw2 = boxw - 2*border
@@ -236,6 +267,9 @@ const drawScore = () => {
   view.fillRect( boxx2, 0, boxw2, boxh2 )
   view.setColor(black)
   view.text( str, boxx2 + scbuf, 0.9*fontSize )
+
+  if (vol) drawVolOn( 580, 10 )
+  else drawVolOff( 580, 13 )
 }
 const highlight = state => {
   const player = state.player
@@ -267,8 +301,9 @@ const drawGameOver = () => {
   if ( newHigh ) writeCentered(420)('New High Score!')
   view.context.font = `small-caps 30px sans-serif`
   writeCentered(580)('Click To Restart')
-  window.addEventListener( 'keydown', load )
-  window.addEventListener( 'click', load )
+  setTimeout( () => {
+    window.addEventListener( 'click', init )
+  }, 1000 )
 }
 const draw = state => {
   view.fillAll(white)
@@ -276,7 +311,7 @@ const draw = state => {
   drawTiles(state)
   drawPlayer( ...state.offp )( ...state.player )
 
-  highlight(state)
+  if ( !paused ) highlight(state)
   drawGrid(state)
   drawBorder()
   drawScore()
@@ -285,7 +320,7 @@ const draw = state => {
 
 const gameOver = () => {
   alive = false
-  score = round( timer() )
+  score = flr( timer() )
   if ( score > highScore ) {
     window.localStorage.setItem( 'tilesHighScore', score )
     highScore = score
@@ -360,30 +395,63 @@ const step = state => {
   } )
 }
 
+let drawIntro
+
 const start = () => {
-  window.addEventListener( 'keydown', load )
-  window.addEventListener( 'click', load )
-  generateIntroArt().then( box => {
+  music.onended = () => music.play()
+  music.play()
+  document.addEventListener( 'click', volListener )
+  window.addEventListener( 'click', init )
+  const comic = new Image( 160, 160 )
+  let box
+  drawIntro = () => {
     const [ w, h ] = size
     const rw = 50
     view.fillAll(white)
+    view.drawImg( comic, 0.5, 0.5 )( ...view.center )
     view.drawImg( box, 0.5, 0.5 )( ...view.center )
     view.setColor(black)
     view.fillRect( 0, 0, rw, h )
     view.fillRect( 0, 0, h, rw )
     view.fillRect( h - rw, 0, rw, h )
     view.fillRect( 0, h - rw, h, rw )
+    if (vol) view.drawImg(art.volOn)( 580, 10 )
+    else view.drawImg(art.volOff)( 580, 13 )
     view.context.font = `small-caps bold 80px sans-serif`
-    writeCentered(300)('Tiles')
+    writeCentered(200)('Tiles')
     view.context.font = `small-caps 15px sans-serif`
     writeCentered(580)('(based on xkcd.com/245)')
     view.context.font = `small-caps bold 20px sans-serif`
     writeCentered(450)('Click To Start')
-  } )
+  }
+  comic.src = 'floor_tiles.png'
+  comic.onload = () => {
+    generateIntroArt().then( box0 => {
+      box = box0
+      drawIntro()
+      // const [ w, h ] = size
+      // const rw = 50
+      // view.fillAll(white)
+      // view.drawImg( comic, 0.5, 0.5 )( ...view.center )
+      // view.drawImg( box, 0.5, 0.5 )( ...view.center )
+      // view.setColor(black)
+      // view.fillRect( 0, 0, rw, h )
+      // view.fillRect( 0, 0, h, rw )
+      // view.fillRect( h - rw, 0, rw, h )
+      // view.fillRect( 0, h - rw, h, rw )
+      // view.drawImg(art.volOn)( 580, 10 )
+      // view.context.font = `small-caps bold 80px sans-serif`
+      // writeCentered(200)('Tiles')
+      // view.context.font = `small-caps 15px sans-serif`
+      // writeCentered(580)('(based on xkcd.com/245)')
+      // view.context.font = `small-caps bold 20px sans-serif`
+      // writeCentered(450)('Click To Start')
+    } )
+  }
 }
 
 view.context.font = `small-caps bold 80px sans-serif`
-view.fillAll(black)
-view.setColor(white)
+view.fillAll(white)
+view.setColor(black)
 writeCentered(320)('Loading...')
-setTimeout( start, 1 )
+setTimeout( load, 1 )
